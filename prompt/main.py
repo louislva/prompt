@@ -12,9 +12,10 @@ import json
 DEFAULT_USER_SETTINGS = {
     "style_prompt": ""
 }
+user_settings_path = os.path.join(os.path.dirname(__file__), "../user_settings.json")
 user_settings = DEFAULT_USER_SETTINGS
 try:
-    user_settings = json.load(open(os.path.join(os.path.dirname(__file__), "user_settings.json")))
+    user_settings = json.load(open(user_settings_path))
 except FileNotFoundError:
     pass
 
@@ -89,6 +90,7 @@ def to_prompt(text):
         file_path = file_ref[1:].lower()
         if file_path in file_paths:
             files_referenced.append(file_path)
+    files_referenced = list(set(files_referenced))
 
     prompt = ""
 
@@ -197,8 +199,7 @@ def update_settings():
         user_settings["style_prompt"] = new_style
         
         # Save to file
-        settings_path = os.path.join(os.path.dirname(__file__), "user_settings.json")
-        with open(settings_path, 'w') as f:
+        with open(user_settings_path, 'w') as f:
             json.dump(user_settings, f)
             
         print("\033[32mSettings updated successfully!\033[0m")
@@ -211,6 +212,11 @@ def cli():
     
     if len(sys.argv) > 1 and sys.argv[1] == "--settings":
         update_settings()
+    if len(sys.argv) > 1 and sys.argv[1] == "--reset-settings":
+        user_settings = DEFAULT_USER_SETTINGS
+        with open(user_settings_path, 'w') as f:
+            json.dump(user_settings, f)
+        print("\033[32mSettings reset successfully!\033[0m")
     else:
         main()
 
