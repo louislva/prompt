@@ -97,11 +97,17 @@ def to_clipboard(text):
     pyperclip.copy(text)
 
 class PromptHistory:
-    def __init__(self, max_history=10):
+    def __init__(self, max_history=50):
         self.max_history = max_history
         self.history_dir = Path(__file__).parent
         self.current_history = deque(maxlen=max_history)
         self.load_history()
+
+    def get_strings(self):
+        return list(self.current_history)
+
+    def append_string(self, string):
+        pass # we need this bc PromptSession expects an append method
 
     def get_cwd_hash(self):
         # Create a hash of the current working directory
@@ -120,6 +126,12 @@ class PromptHistory:
             except json.JSONDecodeError:
                 self.current_history = deque(maxlen=self.max_history)
 
+    async def load(self):
+        """Make this method async and yield history items"""
+        self.load_history()
+        for item in reversed(self.current_history):
+            yield item
+    
     def add_prompt(self, prompt):
         self.current_history.append(prompt)
         self.save_history()
@@ -137,8 +149,11 @@ def main():
     file_path_completer = FilePathCompleter()
     prompt_history = PromptHistory()
     
-    # Create session
-    session = PromptSession(completer=file_path_completer)
+    # Create session with history
+    session = PromptSession(
+        completer=file_path_completer,
+        history=prompt_history
+    )
     
     while True:
         try:
