@@ -93,5 +93,10 @@ def main():
         except EOFError:
             break
 
-if __name__ == "__main__":
+# Change this part
+def cli():
+    """Entry point for the command line script"""
     main()
+
+if __name__ == "__main__":
+    cli()
