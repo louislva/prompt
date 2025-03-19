@@ -9,6 +9,15 @@ import hashlib
 from collections import deque
 import json
 
+DEFAULT_USER_SETTINGS = {
+    "style_prompt": ""
+}
+user_settings = DEFAULT_USER_SETTINGS
+try:
+    user_settings = json.load(open(os.path.join(os.path.dirname(__file__), "user_settings.json")))
+except FileNotFoundError:
+    pass
+
 file_ref_re = re.compile(r'(?<!\\)@\S+')
 
 def get_file_paths():
@@ -91,6 +100,9 @@ def to_prompt(text):
     
     prompt += text
 
+    if user_settings.get("style_prompt", ""):
+        prompt += "\n\n---\n\n" + user_settings["style_prompt"]
+
     return prompt
 
 def to_clipboard(text):
@@ -169,10 +181,38 @@ def main():
         except EOFError:
             break
 
-# Change this part
+def update_settings():
+    """Handle settings modification mode"""
+    print("\033[1;34mSettings Mode\033[0m")
+    
+    # Load current settings
+    current_style = user_settings.get("style_prompt", "")
+    
+    # Create session for settings input
+    session = PromptSession()
+    
+    try:
+        new_style = session.prompt("Edit style prompt: ", multiline=False, default=current_style)
+        # Update settings
+        user_settings["style_prompt"] = new_style
+        
+        # Save to file
+        settings_path = os.path.join(os.path.dirname(__file__), "user_settings.json")
+        with open(settings_path, 'w') as f:
+            json.dump(user_settings, f)
+            
+        print("\033[32mSettings updated successfully!\033[0m")
+    except (KeyboardInterrupt, EOFError):
+        print("\nSettings update cancelled.")
+
 def cli():
     """Entry point for the command line script"""
-    main()
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == "--settings":
+        update_settings()
+    else:
+        main()
 
 if __name__ == "__main__":
     cli()

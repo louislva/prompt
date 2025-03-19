@@ -1,3 +1,4 @@
 __pycache__
 *.egg-info
 prompt_history/
+user_settings.json
