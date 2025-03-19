@@ -12,7 +12,7 @@ import json
 DEFAULT_USER_SETTINGS = {
     "style_prompt": ""
 }
-user_settings_path = os.path.join(os.path.dirname(__file__), "../user_settings.json")
+user_settings_path = os.path.join(os.path.dirname(__file__), "user_settings.json")
 user_settings = DEFAULT_USER_SETTINGS
 try:
     user_settings = json.load(open(user_settings_path))
@@ -113,7 +113,7 @@ def to_clipboard(text):
 class PromptHistory:
     def __init__(self, max_history=50):
         self.max_history = max_history
-        self.history_dir = Path(__file__).parent
+        self.history_dir = Path(__file__).parent / "prompt_history"
         self.current_history = deque(maxlen=max_history)
         self.load_history()
 
@@ -128,7 +128,7 @@ class PromptHistory:
         return hashlib.md5(os.getcwd().encode()).hexdigest()
 
     def get_history_file(self):
-        return self.history_dir / f"../prompt_history/{self.get_cwd_hash()}.json"
+        return self.history_dir / f"{self.get_cwd_hash()}.json"
 
     def load_history(self):
         history_file = self.get_history_file()
@@ -152,6 +152,7 @@ class PromptHistory:
 
     def save_history(self):
         history_file = self.get_history_file()
+        os.makedirs(history_file.parent, exist_ok=True)
         with open(history_file, 'w') as f:
             json.dump(list(self.current_history), f)
 
