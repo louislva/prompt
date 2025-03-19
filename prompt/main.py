@@ -161,6 +161,7 @@ def main():
             text = session.prompt("> ")
             processed_prompt = to_prompt(text)
             to_clipboard(processed_prompt)
+            print("\033[32mCopied to clipboard!\033[0m")  # Print in green color
             prompt_history.add_prompt(text)
             break
         except KeyboardInterrupt:
