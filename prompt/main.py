@@ -4,15 +4,36 @@ from pathlib import Path
 import os
 import pyperclip
 import re
+import pathspec
 
 file_ref_re = re.compile(r'(?<!\\)@\S+')
 
 def get_file_paths():
+    # Load gitignore patterns if .gitignore exists
+    gitignore_patterns = []
+    if os.path.exists('.gitignore'):
+        with open('.gitignore', 'r') as f:
+            spec = pathspec.PathSpec.from_lines('gitwildmatch', f.readlines())
+    else:
+        spec = pathspec.PathSpec([])
+
     file_paths = []
     for root, dirs, files in os.walk('.'):
+        # Remove hidden directories from dirs list (modifies walk)
+        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        
         for name in files:
-            # Store paths without the './' prefix
+            # Skip hidden files
+            if name.startswith('.'): 
+                continue
+                
+            # Get relative path without './' prefix
             full_path = os.path.join(root, name)[2:]
+            
+            # Skip if matches gitignore patterns
+            if spec.match_file(full_path):
+                continue
+                
             # Get the last modified time for the file
             mod_time = os.path.getmtime(os.path.join(root, name))
             file_paths.append((full_path, mod_time))
