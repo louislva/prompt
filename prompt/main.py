@@ -5,6 +5,9 @@ import os
 import pyperclip
 import re
 import pathspec
+import hashlib
+from collections import deque
+import json
 
 file_ref_re = re.compile(r'(?<!\\)@\S+')
 
@@ -93,12 +96,46 @@ def to_prompt(text):
 def to_clipboard(text):
     pyperclip.copy(text)
 
+class PromptHistory:
+    def __init__(self, max_history=10):
+        self.max_history = max_history
+        self.history_dir = Path(__file__).parent
+        self.current_history = deque(maxlen=max_history)
+        self.load_history()
+
+    def get_cwd_hash(self):
+        # Create a hash of the current working directory
+        return hashlib.md5(os.getcwd().encode()).hexdigest()
+
+    def get_history_file(self):
+        return self.history_dir / f"../prompt_history/{self.get_cwd_hash()}.json"
+
+    def load_history(self):
+        history_file = self.get_history_file()
+        if history_file.exists():
+            try:
+                with open(history_file, 'r') as f:
+                    history_list = json.load(f)
+                    self.current_history = deque(history_list, maxlen=self.max_history)
+            except json.JSONDecodeError:
+                self.current_history = deque(maxlen=self.max_history)
+
+    def add_prompt(self, prompt):
+        self.current_history.append(prompt)
+        self.save_history()
+
+    def save_history(self):
+        history_file = self.get_history_file()
+        with open(history_file, 'w') as f:
+            json.dump(list(self.current_history), f)
+
 def main():
     # Print welcome message in blue and bold
     print("\033[1;34mWelcome to Prompt!\033[0m")
     
-    # Create completer
+    # Create completer and history
     file_path_completer = FilePathCompleter()
+    prompt_history = PromptHistory()
     
     # Create session
     session = PromptSession(completer=file_path_completer)
@@ -107,7 +144,9 @@ def main():
         try:
             # This will show suggestions as you type
             text = session.prompt("> ")
-            to_clipboard(to_prompt(text))
+            processed_prompt = to_prompt(text)
+            to_clipboard(processed_prompt)
+            prompt_history.add_prompt(text)
             break
         except KeyboardInterrupt:
             break
