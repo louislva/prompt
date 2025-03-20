@@ -87,9 +87,23 @@ def to_prompt(text):
     file_paths_lower = [path.lower() for path in get_file_paths()]
     files_referenced = []
     for file_ref in file_refs:
-        file_path = file_ref[1:].lower()
+        file_ref_key = file_ref[1:].lower()
+        # Find it; either by exact match or, second priority, by partial match
+        file_path = next(
+            (path for path in file_paths_lower if file_ref_key == path),
+            next(
+                (path for path in file_paths_lower if path.endswith(file_ref_key)),
+                next(
+                    (path for path in file_paths_lower if file_ref_key in path),
+                    None
+                )
+            )
+        )
+
         if file_path in file_paths_lower:
             files_referenced.append(file_path)
+            text = text.replace(file_ref, f"@{file_path}")
+    
     files_referenced = list(set(files_referenced))
 
     prompt = ""
