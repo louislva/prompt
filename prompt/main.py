@@ -84,11 +84,11 @@ class FilePathCompleter(Completer):
 def to_prompt(text):
     # Regular expression to match unescaped @ followed by non-whitespace characters
     file_refs = file_ref_re.findall(text)
-    file_paths = get_file_paths()
+    file_paths_lower = [path.lower() for path in get_file_paths()]
     files_referenced = []
     for file_ref in file_refs:
         file_path = file_ref[1:].lower()
-        if file_path in file_paths:
+        if file_path in file_paths_lower:
             files_referenced.append(file_path)
     files_referenced = list(set(files_referenced))
 
