@@ -84,23 +84,23 @@ class FilePathCompleter(Completer):
 def to_prompt(text):
     # Regular expression to match unescaped @ followed by non-whitespace characters
     file_refs = file_ref_re.findall(text)
-    file_paths_lower = [path.lower() for path in get_file_paths()]
+    file_paths = get_file_paths()
     files_referenced = []
     for file_ref in file_refs:
-        file_ref_key = file_ref[1:].lower()
+        file_ref_key = file_ref[1:]
         # Find it; either by exact match or, second priority, by partial match
         file_path = next(
-            (path for path in file_paths_lower if file_ref_key == path),
+            (path for path in file_paths if file_ref_key.lower() == path.lower()),
             next(
-                (path for path in file_paths_lower if path.endswith(file_ref_key)),
+                (path for path in file_paths if path.lower().endswith(file_ref_key.lower())),
                 next(
-                    (path for path in file_paths_lower if file_ref_key in path),
+                    (path for path in file_paths if file_ref_key.lower() in path.lower()),
                     None
                 )
             )
         )
 
-        if file_path in file_paths_lower:
+        if file_path:
             files_referenced.append(file_path)
             text = text.replace(file_ref, f"@{file_path}")
     
